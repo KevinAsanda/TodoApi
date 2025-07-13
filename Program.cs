@@ -1,6 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<TodoContext>(options =>options.UseSqlServer(connectionString));
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -19,52 +22,48 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// This is our new endpoint
 // Get all todos
-app.MapGet("/todos", () => TodoDb._todos);
+app.MapGet("/todos", async (TodoContext context) =>
+    await context.Todos.ToListAsync());
 
 // Get a single todo by its Id
-app.MapGet("/todos/{id}", (int id) =>
-{
-    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
-    return todo is not null ? Results.Ok(todo) : Results.NotFound();
-});
+app.MapGet("/todos/{id}", async (TodoContext context, int id) =>
+    await context.Todos.FindAsync(id)
+        is Todo todo
+            ? Results.Ok(todo)
+            : Results.NotFound());
 
 // Create a new todo
-app.MapPost("/todos", (Todo todo) =>
+app.MapPost("/todos", async (TodoContext context, Todo todo) =>
 {
-    var newId = TodoDb._todos.Any() ? TodoDb._todos.Max(t => t.Id) + 1 : 1;
-    todo.Id = newId;
-    TodoDb._todos.Add(todo);
+    context.Todos.Add(todo);
+    await context.SaveChangesAsync();
     return Results.Created($"/todos/{todo.Id}", todo);
 });
 
-// Additing a todo
-app.MapPut("/todos/{id}", (int id, Todo inputTodo) =>
+// Update a todo
+app.MapPut("/todos/{id}", async (TodoContext context, int id, Todo inputTodo) =>
 {
-    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
-
+    var todo = await context.Todos.FindAsync(id);
     if (todo is null) return Results.NotFound();
 
     todo.Name = inputTodo.Name;
     todo.IsComplete = inputTodo.IsComplete;
 
+    await context.SaveChangesAsync();
     return Results.NoContent();
 });
 
-// deleting a todo
-app.MapDelete("/todos/{id}", (int id) =>
+// Delete a todo
+app.MapDelete("/todos/{id}", async (TodoContext context, int id) =>
 {
-    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
-
-    if (todo is null)
+    if (await context.Todos.FindAsync(id) is Todo todo)
     {
-        return Results.NotFound();
+        context.Todos.Remove(todo);
+        await context.SaveChangesAsync();
+        return Results.NoContent();
     }
-
-    TodoDb._todos.Remove(todo);
-
-    return Results.NoContent();
+    return Results.NotFound();
 });
 
 app.Run();
