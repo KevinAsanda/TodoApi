@@ -1,3 +1,5 @@
+using TodoApi;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -17,28 +19,52 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// This is our new endpoint
+// Get all todos
+app.MapGet("/todos", () => TodoDb._todos);
 
-app.MapGet("/weatherforecast", () =>
+// Get a single todo by its Id
+app.MapGet("/todos/{id}", (int id) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
+    return todo is not null ? Results.Ok(todo) : Results.NotFound();
+});
+
+// Create a new todo
+app.MapPost("/todos", (Todo todo) =>
+{
+    var newId = TodoDb._todos.Any() ? TodoDb._todos.Max(t => t.Id) + 1 : 1;
+    todo.Id = newId;
+    TodoDb._todos.Add(todo);
+    return Results.Created($"/todos/{todo.Id}", todo);
+});
+
+// Additing a todo
+app.MapPut("/todos/{id}", (int id, Todo inputTodo) =>
+{
+    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
+
+    if (todo is null) return Results.NotFound();
+
+    todo.Name = inputTodo.Name;
+    todo.IsComplete = inputTodo.IsComplete;
+
+    return Results.NoContent();
+});
+
+// deleting a todo
+app.MapDelete("/todos/{id}", (int id) =>
+{
+    var todo = TodoDb._todos.FirstOrDefault(t => t.Id == id);
+
+    if (todo is null)
+    {
+        return Results.NotFound();
+    }
+
+    TodoDb._todos.Remove(todo);
+
+    return Results.NoContent();
+});
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
