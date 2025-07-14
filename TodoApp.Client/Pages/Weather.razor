@@ -19,25 +19,20 @@
 }
 else
 {
-    <table class="table">
-        <thead>
+    <tbody>
+        @foreach (var todo in todos)
+        {
             <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Completed?</th>
+                <td>
+                    <input type="checkbox" @bind="todo.IsComplete" @bind:after="() => UpdateItem(todo)" />
+                </td>
+                <td>@todo.Name</td>
+                <td>
+                    <button @onclick="() => DeleteItem(todo.Id)" class="btn btn-danger btn-sm">Delete</button>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var todo in todos)
-            {
-                <tr>
-                    <td>@todo.Id</td>
-                    <td>@todo.Name</td>
-                    <td>@todo.IsComplete</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        }
+    </tbody>
 }
 
 @code {
@@ -70,6 +65,17 @@ else
             // Clear the input and reload the list
             newTodoName = string.Empty;
             await LoadTodos();
+        }
+
+        private async Task UpdateItem(Todo todo)
+        {
+            await Http.PutAsJsonAsync($"todos/{todo.Id}", todo);
+        }
+
+        private async Task DeleteItem(int id)
+        {
+            await Http.DeleteAsync($"todos/{id}");
+            await LoadTodos(); // Reload the list to show the item has been removed
         }
     }
 }
