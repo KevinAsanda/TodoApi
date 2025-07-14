@@ -26,3 +26,15 @@ This is a complete full-stack web application built from scratch, demonstrating 
 3.  Ensure the database connection string in `TodoApi/appsettings.json` is configured for your environment.
 4.  Set the Solution to launch multiple startup projects (`TodoApi` and `TodoApp.Client`).
 5.  Press **F5** to run the application. The API will launch in a console window and the Blazor app will open in your browser.
+
+
+---
+
+## What's next
+1. Validation: Add checks to prevent users from creating empty to-do items.
+
+2. Authentication & Authorization: This is the most significant next step. Add user accounts so that different people can have their own private to-do lists.
+
+3. Better UI/UX: Improve the user experience with loading indicators, error messages, and confirmation dialogs (e.g., "Are you sure you want to delete?").
+
+4. Deployment: Learn how to deploy both the API and the Blazor app to a cloud service like Microsoft Azure, making it live on the internet.
