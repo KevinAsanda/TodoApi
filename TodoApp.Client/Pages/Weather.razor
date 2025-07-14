@@ -6,6 +6,11 @@
 
 <h1>To-Do List</h1>
 
+<div class="input-group mb-3">
+    <input @bind="newTodoName" placeholder="Something to do" class="form-control" />
+    <button @onclick="AddItem" class="btn btn-primary">Add</button>
+</div>
+
 <p>This component demonstrates fetching data from our API.</p>
 
 @if (todos is null)
@@ -36,10 +41,35 @@ else
 }
 
 @code {
-    private Todo[]? todos;
+    @code {
+        private Todo[]? todos;
+        private string? newTodoName;
 
-    protected override async Task OnInitializedAsync()
-    {
-        todos = await Http.GetFromJsonAsync<Todo[]>("todos");
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadTodos();
+        }
+
+        private async Task LoadTodos()
+        {
+            todos = await Http.GetFromJsonAsync<Todo[]>("todos");
+        }
+
+        private async Task AddItem()
+        {
+            if (string.IsNullOrWhiteSpace(newTodoName))
+            {
+                return; // Don't add empty todos
+            }
+
+            var newTodo = new Todo { Name = newTodoName, IsComplete = false };
+
+            // Send the new item to the API
+            await Http.PostAsJsonAsync("todos", newTodo);
+
+            // Clear the input and reload the list
+            newTodoName = string.Empty;
+            await LoadTodos();
+        }
     }
 }

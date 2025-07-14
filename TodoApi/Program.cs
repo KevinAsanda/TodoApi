@@ -11,6 +11,19 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer(); // This one discovers the API endpoints.
 builder.Services.AddSwaggerGen(); // This one generates the documentation.
 
+const string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("https://localhost:7133") // <-- Paste your Blazor app's URL here
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -21,6 +34,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(MyAllowSpecificOrigins);
 
 // Get all todos
 app.MapGet("/todos", async (TodoContext context) =>
