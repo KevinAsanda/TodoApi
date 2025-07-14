@@ -1,0 +1,45 @@
+﻿@page "/weather"
+@inject HttpClient Http
+@using System.Net.Http.Json
+
+<PageTitle>To-Do List</PageTitle>
+
+<h1>To-Do List</h1>
+
+<p>This component demonstrates fetching data from our API.</p>
+
+@if (todos is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Completed?</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var todo in todos)
+            {
+                <tr>
+                    <td>@todo.Id</td>
+                    <td>@todo.Name</td>
+                    <td>@todo.IsComplete</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Todo[]? todos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        todos = await Http.GetFromJsonAsync<Todo[]>("todos");
+    }
+}
